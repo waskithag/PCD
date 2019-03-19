@@ -222,6 +222,7 @@ class Root(Tk):
         imgarr[:, :, 3] = newblue
         imgnew = Image.fromarray(imgarr.astype('uint8'))
         self.img = imgnew
+        
         self.cetak(imgnew, 0, 0)
                 
     def shape(self):
