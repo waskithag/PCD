@@ -32,7 +32,12 @@ class Root(Tk):
         self.buttons("Zoom In", self.zoomin, 8)
         self.buttons("Print Histogram", self.histogram, 9)
         self.buttons("Histeq", self.histeq, 10)
-        self.buttons("Print Shape", self.shape, 11)
+        self.buttons("Convulasi", self.convolute, 11)
+        self.buttons("Erosi", self.shape, 12)
+        self.buttons("Dilasi", self.shape, 13)
+        self.buttons("Segmentasi", self.segmentation, 14)
+        self.buttons("Kompresi", self.shape, 15)
+        self.buttons("Print Shape", self.shape, 16)
         self.gambar = None
         self.img = Image
         self.countred = np.zeros(256, dtype = int) #inisiasi penampung nilai untuk menampilkan histogram
@@ -222,9 +227,77 @@ class Root(Tk):
         imgarr[:, :, 3] = newblue
         imgnew = Image.fromarray(imgarr.astype('uint8'))
         self.img = imgnew
-        
         self.cetak(imgnew, 0, 0)
-                
+        
+    def convolute(self):
+        newimg = self.img.convert("RGBA")
+        img_arr = np.asfarray(newimg)
+        h, w, _ = img_arr.shape
+        
+        temp = np.zeros_like(img_arr)
+        ker = np.array([[1, -1, 1],
+                        [-1, 1, -1],
+                        [1, -1, 1]])
+        
+        ker = ker.astype("int")
+
+        for i in range(1, h-1):
+            for j in range(1, w-1):
+                temp[i, j, 0] = img_arr[i - 1, j - 1, 0] * ker[0, 0] + img_arr[i - 1, j, 0] * ker[0, 1] + img_arr[i - 1, j + 1, 0] * ker[0, 2] + img_arr[i, j - 1, 0] * ker[1, 0] + \
+                    img_arr[i, j, 0] * ker[1, 1] + img_arr[i, j + 1, 0] * ker[1, 2] + img_arr[i + 1, j - 1,
+                                                                                              0] * ker[2, 0] + img_arr[i + 1, j, 0] * ker[2, 1] + img_arr[i + 1, j + 1, 0] * ker[2, 2]
+                temp[i, j, 1] = img_arr[i - 1, j - 1, 1] * ker[0, 0] + img_arr[i - 1, j, 1] * ker[0, 1] + img_arr[i - 1, j + 1, 1] * ker[0, 2] + img_arr[i, j - 1, 1] * ker[1, 0] + \
+                    img_arr[i, j, 1] * ker[1, 1] + img_arr[i, j + 1, 1] * ker[1, 2] + img_arr[i + 1, j - 1,
+                                                                                              1] * ker[2, 0] + img_arr[i + 1, j, 1] * ker[2, 1] + img_arr[i + 1, j + 1, 1] * ker[2, 2]
+                temp[i, j, 2] = img_arr[i - 1, j - 1, 2] * ker[0, 0] + img_arr[i - 1, j, 2] * ker[0, 1] + img_arr[i - 1, j + 1, 2] * ker[0, 2] + img_arr[i, j - 1, 2] * ker[1, 0] + \
+                    img_arr[i, j, 2] * ker[1, 1] + img_arr[i, j + 1, 2] * ker[1, 2] + img_arr[i + 1, j - 1,
+                                                                                              2] * ker[2, 0] + img_arr[i + 1, j, 2] * ker[2, 1] + img_arr[i + 1, j + 1, 2] * ker[2, 2]
+
+        new_arr = np.clip(temp, 0, 255)
+        imgnew = Image.fromarray(new_arr.astype('uint8'))
+        imgnew = imgnew.convert("RGB")
+        self.img = imgnew
+        self.cetak(imgnew, 0, 0)
+    
+        
+    def segmentation(self):
+        newimg = self.img.convert("RGBA")
+        img_arr = np.asfarray(newimg)
+    
+        h, w, _ = img_arr.shape
+        temp = np.zeros_like(img_arr)
+    
+        for i in range(h):
+            for j in range(w):
+                if img_arr[i, j, 0] >= 200 and img_arr[i, j, 1] >= 200 and img_arr[i, j, 2] >= 200:
+                    temp[i, j, :] = 255
+                elif img_arr[i, j, 0] >= 200 and img_arr[i, j, 1] <= 100 and img_arr[i, j, 2] <= 100:
+                    temp[i, j, 0] = 255
+                elif img_arr[i, j, 0] <= 100 and img_arr[i, j, 1] >= 200 and img_arr[i, j, 2] <= 100:
+                    temp[i, j, 1] = 255
+                elif img_arr[i, j, 0] <= 100 and img_arr[i, j, 1] <= 100 and img_arr[i, j, 2] >= 200:
+                    temp[i, j, 2] = 255
+                elif img_arr[i, j, 0] >= 170 and img_arr[i, j, 1] >= 170 and img_arr[i, j, 2] <= 100:
+                    temp[i, j, 0] = 255
+                    temp[i, j, 1] = 255
+                elif img_arr[i, j, 0] <= 100 and img_arr[i, j, 1] >= 170 and img_arr[i, j, 2] >= 170:
+                    temp[i, j, 1] = 255
+                    temp[i, j, 2] = 255
+                elif img_arr[i, j, 0] >= 150 and img_arr[i, j, 1] <= 100 and img_arr[i, j, 2] >= 150:
+                    temp[i, j, 1] = 255
+                    temp[i, j, 2] = 255
+                elif img_arr[i, j, 0] >= 100 and img_arr[i, j, 1] <= 50 and img_arr[i, j, 2] <= 50:
+                    temp[i, j, 0] = 128
+                elif img_arr[i, j, 0] <= 50 and img_arr[i, j, 1] >= 100 and img_arr[i, j, 2] <= 50:
+                    temp[i, j, 1] = 128
+                elif img_arr[i, j, 0] <= 70 and img_arr[i, j, 1] <= 70 and img_arr[i, j, 2] >= 100:
+                    temp[i, j, 2] = 128
+    
+        imgnew = Image.fromarray(temp.astype('uint8'))
+        imgnew = imgnew.convert("RGB")
+        self.img = imgnew
+        self.cetak(imgnew, 0, 0)
+        
     def shape(self):
         newimg = self.img.convert("RGBA")
         imgarr = np.asarray(newimg)   
